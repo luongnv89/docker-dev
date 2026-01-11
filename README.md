@@ -6,6 +6,7 @@ Curated Docker images for different development environments. Each image lives i
 
 | Folder    | Description                                    | Docs                      |
 |-----------|------------------------------------------------|---------------------------|
+| `u2604dev/` | Ubuntu 26.04 CLI/dev environment with Oh My Zsh, Starship prompt, Vim plugins, Node.js LTS, Python 3.13, etc. | [`u2604dev/README.md`](u2604dev/README.md) |
 | `u2404dev/` | Ubuntu 24.04 CLI/dev environment with Oh My Zsh, Starship prompt, Vim plugins, Node.js LTS, Python 3.12, etc. | [`u2404dev/README.md`](u2404dev/README.md) |
 | `u2204dev/` | Ubuntu 22.04 CLI/dev environment with Oh My Zsh, wedisagree theme, Vim plugins, Node.js, Python 3.12, etc. | [`u2204dev/README.md`](u2204dev/README.md) |
 
@@ -29,9 +30,13 @@ Use **Actions → Build and Publish u2204dev** to trigger the workflow manually.
    echo "${GH_PAT:?}" | docker login ghcr.io -u <your-github-username> --password-stdin
    ```
 
-2. Pull the image that Actions publishes (`latest` or a specific commit SHA tag). The repo currently builds `ghcr.io/luongnv89/u2404dev` and `ghcr.io/luongnv89/u2204dev`:
+2. Pull the image that Actions publishes (`latest` or a specific commit SHA tag). The repo currently builds `ghcr.io/luongnv89/u2604dev`, `ghcr.io/luongnv89/u2404dev`, and `ghcr.io/luongnv89/u2204dev`:
 
    ```bash
+   # Ubuntu 26.04
+   docker pull ghcr.io/luongnv89/u2604dev:latest
+   docker pull ghcr.io/luongnv89/u2604dev:<git-sha>
+
    # Ubuntu 24.04
    docker pull ghcr.io/luongnv89/u2404dev:latest
    docker pull ghcr.io/luongnv89/u2404dev:<git-sha>
@@ -44,6 +49,9 @@ Use **Actions → Build and Publish u2204dev** to trigger the workflow manually.
 3. Run the container the same way you would if you built it locally:
 
    ```bash
+   # Ubuntu 26.04
+   docker run --rm -it ghcr.io/luongnv89/u2604dev:latest zsh
+
    # Ubuntu 24.04
    docker run --rm -it ghcr.io/luongnv89/u2404dev:latest zsh
 
@@ -64,5 +72,5 @@ Use **Actions → Build and Publish u2204dev** to trigger the workflow manually.
 - You can also run the checks ad-hoc with `./scripts/pre-commit.sh`. The script:
   1. Formats shell scripts via `shfmt` (local install or Docker fallback).
   2. Lints shell scripts with ShellCheck and Dockerfiles with Hadolint.
-  3. Builds the `u2204dev` image to ensure the Dockerfile stays healthy.
+  3. Builds the `u2604dev` image to ensure the Dockerfile stays healthy.
   4. Cleans Python caches and removes the temporary build image.
