@@ -1,4 +1,4 @@
-# docker-files
+# docker-dev
 
 Curated Docker images for different development environments. Each image lives in its own directory (e.g., `u2204dev/`) with a dedicated Dockerfile and per-image README describing that environment.
 
