@@ -196,7 +196,7 @@ jobs:
             digest_file="${{ runner.temp }}/digests/${image_dir}.txt"
             if [ -f "$digest_file" ]; then
               image_ref="${{ env.REGISTRY }}/${{ github.repository_owner }}/${image_dir}"
-              digest=$(cat "$digest_file")
+              digest=$(cat "$digest_file" | tr -d '\n\r')
               docker buildx imagetools create "${image_ref}:latest" "${image_ref}@${digest}"
               echo "Created manifest for ${image_dir}"
             fi
