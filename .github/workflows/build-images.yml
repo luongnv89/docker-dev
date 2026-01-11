@@ -149,7 +149,7 @@ jobs:
         run: |
           mkdir -p ${{ runner.temp }}/digests
           digest="${{ steps.build.outputs.digest }}"
-          echo "$digest" > "${{ runner.temp }}/digests/${matrix.image}.txt"
+          echo "$digest" > "${{ runner.temp }}/digests/${{ matrix.image }}.txt"
 
       - name: Upload digest
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
