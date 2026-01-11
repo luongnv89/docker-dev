@@ -34,14 +34,13 @@ ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US:en
 ENV LC_ALL=en_US.UTF-8
 
-# Install Node.js (LTS) and npm
+# Install Node.js (LTS)
 RUN set -eux; \
     echo "[Node] Preparing NodeSource repository"; \
     curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -; \
     echo "[Node] Installing Node.js and npm"; \
     apt-get update; \
-    apt-get install -y nodejs; \
-    npm install -g npm@latest
+    apt-get install -y nodejs
 
 # Install Python 3.13 and pip, set as default
 RUN set -eux; \
