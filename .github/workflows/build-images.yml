@@ -15,11 +15,9 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  # Set default image name, will be overridden per matrix image
   IMAGE_NAME: ${{ github.repository_owner }}
 
 jobs:
-  # Determine which images need to be built based on changed files
   detect-changes:
     name: Detect Changed Images
     runs-on: ubuntu-latest
@@ -34,7 +32,6 @@ jobs:
       - name: Detect changed images
         id: detect
         run: |
-          # Get changed files compared to main branch
           if git diff --name-only origin/main...HEAD | grep -q "^u2204dev/"; then
             IMAGES+=("u2204dev")
           fi
@@ -44,17 +41,14 @@ jobs:
           if git diff --name-only origin/main...HEAD | grep -q "^u2604dev/"; then
             IMAGES+=("u2604dev")
           fi
-          # If no specific images detected, build all
           if [ ${#IMAGES[@]} -eq 0 ]; then
             IMAGES=("u2204dev" "u2404dev" "u2604dev")
           fi
-          # Output as JSON array
           echo "images=$(jq -cn '$IMAGES' --argjson arr "$(printf '%s\n' "${IMAGES[@]}" | jq -R . | jq -s .)")" >> $GITHUB_OUTPUT
 
   build:
     name: Build ${{ matrix.image }}
     needs: detect-changes
-    if: contains(needs.detect-changes.outputs.images, matrix.image)
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
