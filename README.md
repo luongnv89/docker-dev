@@ -6,6 +6,7 @@ Curated Docker images for different development environments. Each image lives i
 
 | Folder    | Description                                    | Docs                      |
 |-----------|------------------------------------------------|---------------------------|
+| `u2404dev/` | Ubuntu 24.04 CLI/dev environment with Oh My Zsh, Starship prompt, Vim plugins, Node.js LTS, Python 3.12, etc. | [`u2404dev/README.md`](u2404dev/README.md) |
 | `u2204dev/` | Ubuntu 22.04 CLI/dev environment with Oh My Zsh, wedisagree theme, Vim plugins, Node.js, Python 3.12, etc. | [`u2204dev/README.md`](u2204dev/README.md) |
 
 > As new images are added, follow the same pattern: create `<image-name>/Dockerfile`, add a `<image-name>/README.md`, and update this table.
@@ -28,25 +29,33 @@ Use **Actions → Build and Publish u2204dev** to trigger the workflow manually.
    echo "${GH_PAT:?}" | docker login ghcr.io -u <your-github-username> --password-stdin
    ```
 
-2. Pull the image that Actions publishes (`latest` or a specific commit SHA tag). The repo currently builds `ghcr.io/luongnv89/u2204dev`:
+2. Pull the image that Actions publishes (`latest` or a specific commit SHA tag). The repo currently builds `ghcr.io/luongnv89/u2404dev` and `ghcr.io/luongnv89/u2204dev`:
 
    ```bash
+   # Ubuntu 24.04
+   docker pull ghcr.io/luongnv89/u2404dev:latest
+   docker pull ghcr.io/luongnv89/u2404dev:<git-sha>
+
+   # Ubuntu 22.04
    docker pull ghcr.io/luongnv89/u2204dev:latest
-   # or for a reproducible version:
    docker pull ghcr.io/luongnv89/u2204dev:<git-sha>
    ```
 
 3. Run the container the same way you would if you built it locally:
 
    ```bash
+   # Ubuntu 24.04
+   docker run --rm -it ghcr.io/luongnv89/u2404dev:latest zsh
+
+   # Ubuntu 22.04
    docker run --rm -it ghcr.io/luongnv89/u2204dev:latest zsh
    ```
 
-> Tip: once authenticated, `docker compose` services can reference the GHCR image directly via `ghcr.io/luongnv89/u2204dev:<tag>`.
+> Tip: once authenticated, `docker compose` services can reference the GHCR image directly via `ghcr.io/luongnv89/<image-name>:<tag>`.
 
 ## Development Workflow
 
-- Install the repo’s pre-commit hook so every commit runs formatting, linting, Docker build tests, and cleanup:
+- Install the repo's pre-commit hook so every commit runs formatting, linting, Docker build tests, and cleanup:
 
   ```bash
   ln -sf ../../scripts/pre-commit.sh .git/hooks/pre-commit
