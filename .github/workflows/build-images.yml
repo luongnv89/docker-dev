@@ -45,8 +45,8 @@ jobs:
           if [ ${#IMAGES[@]} -eq 0 ]; then
             IMAGES=("u2204dev" "u2404dev" "u2604dev")
           fi
-          # Convert to JSON array
-          JSON_IMAGES=$(printf '%s\n' "${IMAGES[@]}" | jq -R . | jq -s .)
+          # Convert to compact single-line JSON array
+          JSON_IMAGES=$(printf '%s\n' "${IMAGES[@]}" | jq -R . | jq -s . | jq -c)
           echo "images=${JSON_IMAGES}" >> $GITHUB_OUTPUT
 
   build:
