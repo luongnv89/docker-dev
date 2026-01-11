@@ -1,0 +1,215 @@
+name: Build and Publish Docker Images
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "u*/**"
+      - ".github/workflows/build-images.yml"
+      - "README.md"
+  pull_request:
+    branches: [main]
+    paths:
+      - "u*/**"
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  # Set default image name, will be overridden per matrix image
+  IMAGE_NAME: ${{ github.repository_owner }}
+
+jobs:
+  # Determine which images need to be built based on changed files
+  detect-changes:
+    name: Detect Changed Images
+    runs-on: ubuntu-latest
+    outputs:
+      images: ${{ steps.detect.outputs.images }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed images
+        id: detect
+        run: |
+          # Get changed files compared to main branch
+          if git diff --name-only origin/main...HEAD | grep -q "^u2204dev/"; then
+            IMAGES+=("u2204dev")
+          fi
+          if git diff --name-only origin/main...HEAD | grep -q "^u2404dev/"; then
+            IMAGES+=("u2404dev")
+          fi
+          if git diff --name-only origin/main...HEAD | grep -q "^u2604dev/"; then
+            IMAGES+=("u2604dev")
+          fi
+          # If no specific images detected, build all
+          if [ ${#IMAGES[@]} -eq 0 ]; then
+            IMAGES=("u2204dev" "u2404dev" "u2604dev")
+          fi
+          # Output as JSON array
+          echo "images=$(jq -cn '$IMAGES' --argjson arr "$(printf '%s\n' "${IMAGES[@]}" | jq -R . | jq -s .)")" >> $GITHUB_OUTPUT
+
+  build:
+    name: Build ${{ matrix.image }}
+    needs: detect-changes
+    if: contains(needs.detect-changes.outputs.images, matrix.image)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ${{ fromJson(needs.detect-changes.outputs.images) }}
+        include:
+          - image: u2204dev
+            dockerfile: u2204dev/Dockerfile
+            context: u2204dev
+          - image: u2404dev
+            dockerfile: u2404dev/Dockerfile
+            context: u2404dev
+          - image: u2604dev
+            dockerfile: u2604dev/Dockerfile
+            context: u2604dev
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Set up QEMU for multi-architecture builds
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.image }}
+          tags: |
+            type=raw,value=latest
+            type=sha
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+
+      - name: Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: ${{ github.event_name != 'pull_request' }}
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: true
+
+      - name: Generate Artifact Attestation
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.image }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true
+
+      - name: Security Scan with Trivy
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'image'
+          image-ref: '${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.image }}:${{ steps.meta.outputs.version }}'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+          category: '/${{ matrix.image }}'
+
+      - name: Export digest
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          mkdir -p ${{ runner.temp }}/digests
+          digest="${{ steps.build.outputs.digest }}"
+          echo "$digest" > "${{ runner.temp }}/digests/${matrix.image}.txt"
+
+      - name: Upload digest
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: digests-${{ matrix.image }}
+          path: ${{ runner.temp }}/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  merge:
+    name: Merge and Create Manifests
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download all digests
+        uses: actions/download-artifact@v4
+        with:
+          path: ${{ runner.temp }}/digests
+          pattern: digests-*
+          merge-multiple: true
+
+      - name: Create manifest list and push for each image
+        run: |
+          for image_dir in u2204dev u2404dev u2604dev; do
+            digest_file="${{ runner.temp }}/digests/${image_dir}.txt"
+            if [ -f "$digest_file" ]; then
+              image_ref="${{ env.REGISTRY }}/${{ github.repository_owner }}/${image_dir}"
+              digest=$(cat "$digest_file")
+              docker buildx imagetools create "${image_ref}:latest" "${image_ref}@${digest}"
+              echo "Created manifest for ${image_dir}"
+            fi
+          done
+
+      - name: Inspect images
+        run: |
+          for image_dir in u2204dev u2404dev u2604dev; do
+            image_ref="${{ env.REGISTRY }}/${{ github.repository_owner }}/${image_dir}"
+            if docker manifest inspect "${image_ref}:latest" > /dev/null 2>&1; then
+              echo "=== ${image_dir} ==="
+              docker buildx imagetools inspect "${image_ref}:latest"
+            fi
+          done

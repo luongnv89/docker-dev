@@ -1,76 +1,180 @@
 # docker-dev
 
+[![Build and Publish](https://github.com/luongnv89/docker-dev/actions/workflows/build-images.yml/badge.svg)](https://github.com/luongnv89/docker-dev/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![GitHub stars](https://img.shields.io/github/stars/luongnv89/docker-dev)](https://github.com/luongnv89/docker-dev/stargazers)
+
 Curated Docker images for different development environments. Each image lives in its own directory (e.g., `u2204dev/`) with a dedicated Dockerfile and per-image README describing that environment.
+
+## Features
+
+- **Multi-Platform Support**: Builds for linux/amd64 and linux/arm64 (M-series Macs, ARM servers)
+- **Automated CI/CD**: GitHub Actions builds and publishes to GitHub Container Registry
+- **Security Scanned**: Images are scanned with Trivy for vulnerabilities
+- **Pre-commit Hooks**: Automated formatting, linting, and testing on every commit
+- **Production Ready**: Artifact attestation for image provenance
 
 ## Available Images
 
-| Folder    | Description                                    | Docs                      |
-|-----------|------------------------------------------------|---------------------------|
-| `u2604dev/` | Ubuntu 26.04 CLI/dev environment with Oh My Zsh, Starship prompt, Vim plugins, Node.js LTS, Python 3.13, etc. | [`u2604dev/README.md`](u2604dev/README.md) |
-| `u2404dev/` | Ubuntu 24.04 CLI/dev environment with Oh My Zsh, Starship prompt, Vim plugins, Node.js LTS, Python 3.12, etc. | [`u2404dev/README.md`](u2404dev/README.md) |
-| `u2204dev/` | Ubuntu 22.04 CLI/dev environment with Oh My Zsh, wedisagree theme, Vim plugins, Node.js, Python 3.12, etc. | [`u2204dev/README.md`](u2204dev/README.md) |
+| Folder | Description | Docs |
+|--------|-------------|------|
+| `u2604dev/` | Ubuntu 26.04 CLI/dev environment with Oh My Zsh, Starship prompt, Vim plugins, Node.js LTS, Python 3.13, etc. | [u2604dev/README.md](u2604dev/README.md) |
+| `u2404dev/` | Ubuntu 24.04 CLI/dev environment with Oh My Zsh, Starship prompt, Vim plugins, Node.js LTS, Python 3.12, etc. | [u2404dev/README.md](u2404dev/README.md) |
+| `u2204dev/` | Ubuntu 22.04 CLI/dev environment with Oh My Zsh, wedisagree theme, Vim plugins, Node.js, Python 3.12, etc. | [u2204dev/README.md](u2204dev/README.md) |
 
 > As new images are added, follow the same pattern: create `<image-name>/Dockerfile`, add a `<image-name>/README.md`, and update this table.
 
-## Global CI/CD (GitHub Container Registry)
+## Quick Start
 
-The repository uses GitHub Actions to build/publish images to GHCR:
+### Pull and Run
 
-- `.github/workflows/build-u2204dev.yml` builds `u2204dev` and pushes `ghcr.io/<owner>/u2204dev`.
-- Workflows authenticate with the built-in `GITHUB_TOKEN`; ensure the repo has package publishing permissions and adjust package visibility in GitHub Packages as needed.
-- Each build publishes a `latest` tag plus an immutable commit `sha` tag, and produces a multi-architecture manifest (linux/amd64 + linux/arm64) so M-series Macs/ARM servers can pull without a fallback.
+```bash
+# Authenticate with GitHub Container Registry
+echo "${GH_PAT}" | docker login ghcr.io -u <your-github-username> --password-stdin
 
-Use **Actions → Build and Publish u2204dev** to trigger the workflow manually.
+# Pull and run an image
+docker run --rm -it ghcr.io/luongnv89/u2604dev:latest zsh
+```
 
-### Consume the published image
+### Build Locally
 
-1. Authenticate against GitHub Container Registry (requires a PAT with at least the `read:packages` scope):
+```bash
+# Build a specific image
+docker build -t my-dev-env -f u2604dev/Dockerfile u2604dev
 
-   ```bash
-   echo "${GH_PAT:?}" | docker login ghcr.io -u <your-github-username> --password-stdin
-   ```
+# Run locally built image
+docker run --rm -it -v "$PWD":/workspace my-dev-env zsh
+```
 
-2. Pull the image that Actions publishes (`latest` or a specific commit SHA tag). The repo currently builds `ghcr.io/luongnv89/u2604dev`, `ghcr.io/luongnv89/u2404dev`, and `ghcr.io/luongnv89/u2204dev`:
+## Documentation
 
-   ```bash
-   # Ubuntu 26.04
-   docker pull ghcr.io/luongnv89/u2604dev:latest
-   docker pull ghcr.io/luongnv89/u2604dev:<git-sha>
+| Topic | File |
+|-------|------|
+| Contributing guidelines | [CONTRIBUTING.md](CONTRIBUTING.md) |
+| Code of conduct | [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) |
+| Security policy | [SECURITY.md](SECURITY.md) |
+| Changelog | [CHANGELOG.md](CHANGELOG.md) |
 
-   # Ubuntu 24.04
-   docker pull ghcr.io/luongnv89/u2404dev:latest
-   docker pull ghcr.io/luongnv89/u2404dev:<git-sha>
+## Installation
 
-   # Ubuntu 22.04
-   docker pull ghcr.io/luongnv89/u2204dev:latest
-   docker pull ghcr.io/luongnv89/u2204dev:<git-sha>
-   ```
+### Prerequisites
 
-3. Run the container the same way you would if you built it locally:
+- Docker Desktop or Docker Engine
+- (Optional) GitHub PAT for pulling from GHCR
 
-   ```bash
-   # Ubuntu 26.04
-   docker run --rm -it ghcr.io/luongnv89/u2604dev:latest zsh
+### Getting Images
 
-   # Ubuntu 24.04
-   docker run --rm -it ghcr.io/luongnv89/u2404dev:latest zsh
+Images are published to GitHub Container Registry. See [Available Images](#available-images) for the full list.
 
-   # Ubuntu 22.04
-   docker run --rm -it ghcr.io/luongnv89/u2204dev:latest zsh
-   ```
+#### Authentication
 
-> Tip: once authenticated, `docker compose` services can reference the GHCR image directly via `ghcr.io/luongnv89/<image-name>:<tag>`.
+```bash
+# Using GitHub PAT (requires read:packages scope)
+echo "${GH_PAT}" | docker login ghcr.io -u <github-username> --password-stdin
+```
 
-## Development Workflow
+#### Pulling Images
 
-- Install the repo's pre-commit hook so every commit runs formatting, linting, Docker build tests, and cleanup:
+```bash
+# Pull latest tag
+docker pull ghcr.io/luongnv89/u2604dev:latest
 
-  ```bash
-  ln -sf ../../scripts/pre-commit.sh .git/hooks/pre-commit
-  ```
+# Pull specific version by commit SHA
+docker pull ghcr.io/luongnv89/u2604dev:<git-sha>
+```
 
-- You can also run the checks ad-hoc with `./scripts/pre-commit.sh`. The script:
-  1. Formats shell scripts via `shfmt` (local install or Docker fallback).
-  2. Lints shell scripts with ShellCheck and Dockerfiles with Hadolint.
-  3. Builds the `u2604dev` image to ensure the Dockerfile stays healthy.
-  4. Cleans Python caches and removes the temporary build image.
+#### Running Containers
+
+```bash
+# Interactive shell
+docker run --rm -it ghcr.io/luongnv89/u2604dev:latest zsh
+
+# With current directory mounted
+docker run --rm -it -v "$PWD":/workspace ghcr.io/luongnv89/u2604dev:latest zsh
+
+# Using docker compose
+docker compose run --rm dev zsh
+```
+
+## Development
+
+### Setting Up
+
+1. Fork the repository
+2. Clone your fork
+3. Create a feature branch
+
+```bash
+git clone https://github.com/YOUR-USERNAME/docker-dev.git
+cd docker-dev
+git checkout -b my-feature
+```
+
+### Pre-commit Hooks
+
+Install the pre-commit hook for automated quality checks:
+
+```bash
+ln -sf ../../scripts/pre-commit.sh .git/hooks/pre-commit
+```
+
+Or run ad-hoc:
+
+```bash
+./scripts/pre-commit.sh
+```
+
+This will:
+- Format shell scripts via shfmt
+- Lint shell scripts with ShellCheck
+- Lint Dockerfiles with Hadolint
+- Build the u2604dev image to verify Dockerfile validity
+- Clean up temporary files
+
+### Adding a New Image
+
+See [CONTRIBUTING.md](CONTRIBUTING.md#adding-a-new-image) for detailed instructions.
+
+### CI/CD
+
+The repository uses GitHub Actions for automated builds:
+
+- **Matrix workflow**: Builds all 3 images with multi-platform support
+- **Path-based detection**: Only builds images that changed
+- **Security scanning**: Trivy scans for vulnerabilities
+- **Artifact attestation**: Provenance for published images
+
+Workflow file: [`.github/workflows/build-images.yml`](.github/workflows/build-images.yml)
+
+## Contributing
+
+We welcome contributions! Please read our [Contributing Guide](CONTRIBUTING.md) for:
+
+- Setting up your development environment
+- Development workflow
+- Pull request process
+- Code style guidelines
+- Testing requirements
+
+By participating, you are expected to uphold our [Code of Conduct](CODE_OF_CONDUCT.md).
+
+## Security
+
+For security vulnerabilities, please read our [Security Policy](SECURITY.md) for responsible reporting guidelines.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- [Oh My Zsh](https://ohmyz.sh/) for the excellent shell framework
+- [Starship](https://starship.rs/) for the cross-shell prompt
+- [Vim](https://www.vim.org/) community for editor plugins
+- [Docker](https://www.docker.com/) for container technology
+
+## Support
+
+- [Issues](../../issues) for bug reports and feature requests
+- [Discussions](../../discussions) for questions and general discussion
+- Email: luongnv89@gmail.com

@@ -1,27 +1,154 @@
 # u2604dev – Ubuntu 26.04 Development Image
 
+[![Docker Pulls](https://img.shields.io/docker/pulls/ghcr.io/luongnv89/u2604dev)](https://github.com/luongnv89/docker-dev/pkgs/container/u2604dev)
+[![GitHub Release](https://img.shields.io/github/v/release/luongnv89/docker-dev?filter=u2604dev)](https://github.com/luongnv89/docker-dev/releases)
+
 This image bundles a productive CLI environment for day-to-day development on Ubuntu 26.04.
+
+## Quick Start
+
+```bash
+# Pull from GitHub Container Registry
+docker pull ghcr.io/luongnv89/u2604dev:latest
+
+# Run interactively
+docker run --rm -it ghcr.io/luongnv89/u2604dev:latest zsh
+
+# With current directory mounted
+docker run --rm -it -v "$PWD":/workspace ghcr.io/luongnv89/u2604dev:latest zsh
+```
 
 ## Features
 
-- **Shell:** Oh My Zsh with the custom `wedisagree` theme and syntax/auto-suggestion plugins.
-- **Editor:** Vim configured with vim-plug plus plugins (fzf, NERDTree, GitGutter, vim-surround, auto-pairs, etc.).
-- **Languages/Tooling:** Node.js (LTS) + npm, Python 3.13 + pip, build-essential, ripgrep, bat, btop, git, and more.
-- **Fonts:** JetBrains Mono Nerd Font pre-installed for consistent terminal appearance.
-- **Welcome prompt:** Displays the shell/editor plus detected Python/Node/npm versions when you start a shell.
+### Shell
+
+- **Oh My Zsh** with custom configuration
+- **Starship** prompt for a fast, cross-shell experience
+- Plugins included:
+  - zsh-syntax-highlighting
+  - zsh-autosuggestions
+  - zsh-completions
+
+### Editor
+
+- **Vim** configured with vim-plug
+- Plugins: fzf, NERDTree, GitGutter, vim-surround, auto-pairs
+
+### Languages & Tooling
+
+| Tool | Version |
+|------|---------|
+| Node.js | LTS |
+| npm | Latest |
+| Python | 3.13 |
+| git | Latest |
+| ripgrep | Latest |
+| bat | Latest |
+| btop | Latest |
+
+### Other Features
+
+- JetBrains Mono Nerd Font pre-installed
+- Welcome message on shell startup showing installed versions
+- Development-friendly shell aliases configured
+
+## Installed Packages
+
+- **CLI Tools**: git, vim, wget, curl, zsh, unzip, fontconfig
+- **Build Tools**: build-essential, ninja-build, cmake, gettext
+- **Utilities**: btop, ripgrep, bat, ca-certificates, gnupg, lsb-release
 
 ## Build
 
 ```bash
-docker build -t luongnv89/u2604dev -f u2604dev/Dockerfile u2604dev
+# Build locally
+docker build -t my-u2604dev -f u2604dev/Dockerfile u2604dev
+
+# Run locally built image
+docker run --rm -it -v "$PWD":/workspace my-u2604dev zsh
 ```
 
-## Run
+## Shell Aliases
+
+The image includes useful aliases:
 
 ```bash
-docker run --rm -it -v "$PWD":/workspace luongnv89/u2604dev zsh
+# General
+alias ls='ls --color=auto'
+alias ll='ls -lah'
+alias la='ls -A'
+alias ..='cd ..'
+alias ...='cd ../..'
+alias grep='grep --color=auto'
+alias cat='bat --paging=never'
+alias top='btop'
+
+# Git
+alias gs='git status'
+alias ga='git add'
+alias gc='git commit'
+alias gp='git push'
+alias gl='git log --oneline --graph --decorate'
+alias gd='git diff'
+
+# Docker
+alias d='docker'
+alias dc='docker compose'
+alias dps='docker ps'
+alias di='docker images'
+
+# Python
+alias venv='python3 -m venv venv'
+alias activate='source venv/bin/activate'
 ```
+
+## Environment Variables
+
+| Variable | Value |
+|----------|-------|
+| LANG | en_US.UTF-8 |
+| LC_ALL | en_US.UTF-8 |
+| SHELL | zsh |
+
+## Image Details
+
+| Property | Value |
+|----------|-------|
+| Base Image | ubuntu:26.04 |
+| Default Shell | zsh |
+| Non-root User | root |
+| Port | 22 (SSH, if enabled) |
+
+## Published Tags
+
+| Tag | Description |
+|-----|-------------|
+| `latest` | Latest stable release |
+| `sha-{git-sha}` | Specific commit SHA |
+| `{major}.{minor}` | Minor version (e.g., 1.0) |
+| `{major}` | Major version (e.g., 1) |
 
 ## CI/CD
 
-The repository includes a GitHub Actions workflow (`.github/workflows/build-u2604dev.yml`) that builds and pushes this image to GitHub Container Registry (`ghcr.io/<owner>/u2604dev`) whenever `main` changes.
+This image is built and published by GitHub Actions:
+
+- **Workflow**: [`.github/workflows/build-images.yml`](../../.github/workflows/build-images.yml)
+- **Registry**: GitHub Container Registry (ghcr.io)
+- **Multi-platform**: linux/amd64, linux/arm64
+
+## Contributing
+
+To modify this image:
+
+1. Edit `u2604dev/Dockerfile`
+2. Update this README if adding/removing features
+3. Test with: `docker build -t test-u2604dev -f u2604dev/Dockerfile u2604dev`
+4. Submit a PR
+
+See [CONTRIBUTING.md](../../CONTRIBUTING.md) for full guidelines.
+
+## Related
+
+- **Main Repository**: [docker-dev](https://github.com/luongnv89/docker-dev)
+- **Other Images**: [u2404dev](../u2404dev/README.md), [u2204dev](../u2204dev/README.md)
+- **Security Policy**: [SECURITY.md](../../SECURITY.md)

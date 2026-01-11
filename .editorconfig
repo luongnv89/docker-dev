@@ -1,0 +1,55 @@
+# EditorConfig is awesome: https://EditorConfig.org
+
+# top-most EditorConfig file
+root = true
+
+# Unix-style newlines with a newline ending every file
+[*]
+end_of_line = lf
+insert_final_newline = true
+charset = utf-8
+trim_trailing_whitespace = true
+
+# Markdown files - allow longer line lengths
+[*.md]
+trim_trailing_whitespace = false
+max_line_length = off
+
+# YAML files - 2 spaces indentation
+[*.{yml,yaml}]
+indent_style = space
+indent_size = 2
+
+# JSON files - 2 spaces indentation
+[*.json]
+indent_style = space
+indent_size = 2
+
+# Dockerfile - use tabs
+[Dockerfile]
+indent_style = tab
+
+# Shell scripts - 4 spaces indentation
+[*.sh]
+indent_style = space
+indent_size = 4
+
+# TOML files - 4 spaces indentation
+[*.toml]
+indent_style = space
+indent_size = 4
+
+# GitHub workflow files - 2 spaces indentation
+[.github/workflows/*.yml]
+indent_style = space
+indent_size = 2
+
+# Pre-commit config - 2 spaces indentation
+[.pre-commit-config.yaml]
+indent_style = space
+indent_size = 2
+
+# Vim files
+[.vimrc]
+indent_style = space
+indent_size = 2

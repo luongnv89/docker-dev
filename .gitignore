@@ -32,3 +32,5 @@ build/
 
 # Docker
 .docker/
+
+blogs/
