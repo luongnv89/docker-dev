@@ -144,28 +144,9 @@ jobs:
           sarif_file: 'trivy-results.sarif'
           category: '/${{ matrix.image }}'
 
-      - name: Upload digest
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: actions/upload-artifact@v4
-        with:
-          name: digests-${{ matrix.image }}
-          path: ${{ runner.temp }}/digests/*
-          if-no-files-found: error
-          retention-days: 1
-
       - name: Inspect final image
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           image_ref="${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.image }}"
           echo "=== ${image_ref} ==="
           docker buildx imagetools inspect "${image_ref}:latest"
-
-      - name: Inspect images
-        run: |
-          for image_dir in u2204dev u2404dev u2604dev; do
-            image_ref="${{ env.REGISTRY }}/${{ github.repository_owner }}/${image_dir}"
-            if docker manifest inspect "${image_ref}:latest" > /dev/null 2>&1; then
-              echo "=== ${image_dir} ==="
-              docker buildx imagetools inspect "${image_ref}:latest"
-            fi
-          done
